@@ -1,62 +1,66 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Encuesta Rose Bar</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    body { font-family: Arial; max-width: 400px; margin: 50px auto; }
     input, button { width: 100%; padding: 10px; margin: 10px 0; }
-    .error { color: red; margin-top: 10px; }
-    .success { color: green; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>🍻 Encuesta Rose Bar</h1>
-  <input type="text" id="nombre" placeholder="¿Cuál es tu nombre?" />
-  <input type="text" id="area" placeholder="¿Cuál es tu área de trabajo?" />
-  <button onclick="enviar()">Enviar</button>
-  <p id="msg" class="error"></p>
+  <h2>🍻 Encuesta Rose Bar</h2>
+  <form id="encuesta">
+    <input type="text" id="nombre" placeholder="Tu nombre" required />
+    //<input type="text" id="area" placeholder="Área de trabajo" required />
+    <select id="area" required>
+      <option value="">Seleccione un área</option>
+      <option value="Administración">Administración</option>
+      <option value="Barra">Bar</option>
+      <option value="Cocina">Cocina</option>
+      <option value="Copería">Mesas</option>
+      <option value="Salón">Seguridad</option>
+      <option value="Supervisión">Gerencia</option>
+    </select>
+    
+    <input type="hidden" id="ip" />
+    <button type="submit">Enviar</button>
+  </form>
+  <div id="estado"></div>
 
   <script>
-    async function obtenerIP() {
-      try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        return data.ip;
-      } catch (e) {
-        return "Desconocida";
-      }
-    }
+    // Obtener IP pública del cliente
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("ip").value = data.ip;
+      });
 
-    async function enviar() {
-      const nombre = document.getElementById("nombre").value;
-      const area = document.getElementById("area").value;
-      const msg = document.getElementById("msg");
-      msg.textContent = "";
+    // Enviar datos al backend
+    document.getElementById("encuesta").addEventListener("submit", function(e) {
+      e.preventDefault();
 
-      const ip = await obtenerIP();
+      const payload = {
+        nombre: document.getElementById("nombre").value,
+        area: document.getElementById("area").value,
+        ip: document.getElementById("ip").value
+      };
 
-      try {
-        const res = await fetch("https://encuesta-api-rosebar.onrender.com/api/responder", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, area, ip })
-        });
-
-        if (res.ok) {
-          msg.textContent = "✅ Gracias, tu respuesta fue enviada.";
-          msg.className = "success";
-        } else {
-          msg.textContent = "❌ Error al enviar. Intenta más tarde.";
-          msg.className = "error";
-        }
-      } catch (e) {
-        msg.textContent = "❌ Error de conexión.";
-        msg.className = "error";
-      }
-    }
+      fetch("https://encuesta-api-rosebar.onrender.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.text())
+      .then(txt => {
+        document.getElementById("estado").innerText = "✅ ¡Gracias! Tu respuesta fue enviada.";
+        document.getElementById("encuesta").reset();
+      })
+      .catch(err => {
+        document.getElementById("estado").innerText = "❌ Error al enviar. Intenta más tarde.";
+      });
+    });
   </script>
 </body>
 </html>
+
