@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Encuesta Rose Bar</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; }
+    .error { color: red; margin-top: 10px; }
+    .success { color: green; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🍻 Encuesta Rose Bar</h1>
+  <input type="text" id="nombre" placeholder="¿Cuál es tu nombre?" />
+  <input type="text" id="area" placeholder="¿Cuál es tu área de trabajo?" />
+  <button onclick="enviar()">Enviar</button>
+  <p id="msg" class="error"></p>
+
+  <script>
+    async function obtenerIP() {
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip;
+      } catch (e) {
+        return "Desconocida";
+      }
+    }
+
+    async function enviar() {
+      const nombre = document.getElementById("nombre").value;
+      const area = document.getElementById("area").value;
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      const ip = await obtenerIP();
+
+      try {
+        const res = await fetch("https://encuesta-api-rosebar.onrender.com/api/responder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, area, ip })
+        });
+
+        if (res.ok) {
+          msg.textContent = "✅ Gracias, tu respuesta fue enviada.";
+          msg.className = "success";
+        } else {
+          msg.textContent = "❌ Error al enviar. Intenta más tarde.";
+          msg.className = "error";
+        }
+      } catch (e) {
+        msg.textContent = "❌ Error de conexión.";
+        msg.className = "error";
+      }
+    }
+  </script>
+</body>
+</html>
